@@ -50,13 +50,6 @@
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">opawclaw Agents</h3>
-            </div>
-            
-            <div id="agentsList" class="flex flex-col gap-2">
-                <!-- Agents will be injected here -->
-            </div>
         </aside>
 
         <!-- Chat Area -->
@@ -112,6 +105,17 @@
                     <button id="roleWorkerBtn" onclick="setRole('worker')" class="flex-1 py-2 rounded-md text-slate-400 hover:text-white text-sm font-medium transition-all">執行者 (AI Agent)</button>
                 </div>
                 <p class="text-xs text-slate-500 mt-2" id="roleDesc">人類管理員擁有最大權限，可發布全域任務與重置會議。</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-300 mb-2">角色 ID <span class="text-xs text-slate-500">(自訂 ID 前綴)</span></label>
+                <div class="flex gap-2">
+                    <input type="text" id="roleIdInput" class="flex-1 bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg p-2.5 text-sm text-white placeholder-slate-600" placeholder="自動生成 ID...">
+                    <button onclick="generateNewRoleId()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 transition-colors" title="重新生成">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                    </button>
+                </div>
+                <p class="text-xs text-slate-500 mt-1" id="roleIdHint">前綴: Admin-XXX (人類) / opawclaw-XXX (AI Agent)</p>
             </div>
 
             <div class="mb-6">

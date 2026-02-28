@@ -6,12 +6,11 @@
 const PondsChat = {
     // 狀態
     currentUser: {
-        id: 'admin',
+        id: '', // P2P ID，將在 init 時生成
         name: 'Human Admin',
         role: 'admin' // 'admin' 或 'worker'
     },
     isMeetingEnded: false,
-    agents: [],
     sqlMode: false,
     
     // DOM 元素
@@ -25,6 +24,10 @@ const PondsChat = {
         
         // 初始化 DOM 元素
         this.initElements();
+        
+        // 初始化用戶 P2P ID
+        this.currentUser.id = this.generateP2PId('admin');
+        this.elements.myPeerId.innerText = this.currentUser.id;
         
         // 初始化資料庫
         await PondsDB.init();
@@ -53,7 +56,6 @@ const PondsChat = {
             msgInput: document.getElementById('msgInput'),
             sendBtn: document.getElementById('sendBtn'),
             dbQueryBtn: document.getElementById('dbQueryBtn'),
-            agentsList: document.getElementById('agentsList'),
             dbRecordCount: document.getElementById('dbRecordCount'),
             worldviewBox: document.getElementById('worldviewBox'),
             syncStatus: document.getElementById('syncStatus'),
@@ -76,12 +78,6 @@ const PondsChat = {
             this.appendMessageToDOM(msg);
         };
         
-        // Agent 更新回調
-        P2PEngine.onAgentUpdate = (agents) => {
-            this.agents = agents;
-            this.renderAgents();
-        };
-        
         // 世界觀更新回調
         P2PEngine.onWorldviewUpdate = (worldview) => {
             this.updateWorldviewDisplay(worldview);
@@ -102,10 +98,6 @@ const PondsChat = {
         for (const msg of messages) {
             this.appendMessageToDOM(msg);
         }
-        
-        // 載入 Agent（不預設添加，由人類用戶或 API 註冊）
-        this.agents = await PondsDB.getAgents();
-        
         // 載入世界觀
         const worldview = await PondsDB.getWorldview();
         if (worldview) {
@@ -210,11 +202,6 @@ const PondsChat = {
         
         // P2P 廣播
         await P2PEngine.broadcastMessage(msg);
-        
-        // 如果是人類用戶，觸發 AI 討論模擬
-        if (this.currentUser.role === 'admin' && this.agents.length > 0) {
-            this.simulateAIDiscussion(msg);
-        }
     },
     
     /**
@@ -446,11 +433,35 @@ const PondsChat = {
     
     /**
      * 產生完整的 P2P ID
+     * 格式: admin-P2P-0x[16位隨機hex]
      */
     generateP2PId(prefix = 'admin') {
-        const timestamp = Date.now().toString(36);
-        const random = Math.random().toString(36).substring(2, 10);
-        return `${prefix}-0x${timestamp}${random}`;
+        const randomHex = Array.from({length: 16}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+        return `${prefix}-P2P-0x${randomHex}`;
+    },
+    
+    /**
+     * 產生角色 ID（短格式）
+     */
+    generateRoleId(prefix = 'Admin') {
+        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+        return `${prefix}-${random}`;
+    },
+    
+    /**
+     * 產生新的角色 ID
+     */
+    generateNewRoleId() {
+        const prefix = this.currentUser.role === 'admin' ? 'Admin' : 'opawclaw';
+        const newRoleId = this.generateRoleId(prefix);
+        
+        // 更新輸入框
+        const roleIdInput = document.getElementById('roleIdInput');
+        if (roleIdInput) {
+            roleIdInput.value = newRoleId;
+        }
+        
+        this.systemMessage(`[System] 已生成新角色 ID: ${newRoleId}`);
     },
     
     /**
@@ -472,6 +483,11 @@ const PondsChat = {
         const adminBtn = this.elements.roleAdminBtn;
         const workerBtn = this.elements.roleWorkerBtn;
         const desc = this.elements.roleDesc;
+        const roleIdInput = document.getElementById('roleIdInput');
+        
+        // 產生對應的前綴
+        const prefix = role === 'admin' ? 'Admin' : 'opawclaw';
+        const roleId = this.generateRoleId(prefix);
         
         if (role === 'admin') {
             this.currentUser.role = 'admin';
@@ -482,11 +498,29 @@ const PondsChat = {
             workerBtn.className = 'flex-1 py-2 rounded-md text-slate-400 hover:text-white text-sm font-medium transition-all';
             desc.innerText = '人類管理員擁有最大權限，可發布全域任務與重置會議。';
             
+            // 更新角色 ID 輸入框
+            if (roleIdInput) {
+                roleIdInput.value = roleId;
+                roleIdInput.placeholder = 'Admin-XXXX';
+            }
+            
             this.elements.myPeerId.innerText = this.currentUser.id;
         } else {
             this.currentUser.role = 'worker';
             this.currentUser.name = 'Openclaw AI Agent (執行者)';
             this.currentUser.id = this.generateP2PId('worker');
+            
+            workerBtn.className = 'flex-1 py-2 rounded-md bg-indigo-600 text-white text-sm font-bold transition-all shadow-md';
+            adminBtn.className = 'flex-1 py-2 rounded-md text-slate-400 hover:text-white text-sm font-medium transition-all';
+            desc.innerText = '作為執行者，將自動讀取 PondsChat 結論，並發送至 Openclaw Chat 頻道執行工作。';
+            
+            // 更新角色 ID 輸入框
+            if (roleIdInput) {
+                roleIdInput.value = roleId;
+                roleIdInput.placeholder = 'opawclaw-XXXX';
+            }
+            
+            this.elements.myPeerId.innerText = this.currentUser.id;
             
             workerBtn.className = 'flex-1 py-2 rounded-md bg-indigo-600 text-white text-sm font-bold transition-all shadow-md';
             adminBtn.className = 'flex-1 py-2 rounded-md text-slate-400 hover:text-white text-sm font-medium transition-all';
@@ -501,6 +535,25 @@ const PondsChat = {
      */
     applySettings() {
         const targetId = this.elements.targetP2pId.value.trim();
+        const roleIdInput = document.getElementById('roleIdInput');
+        
+        // 檢查是否有自定義角色 ID
+        if (roleIdInput && roleIdInput.value.trim()) {
+            const customRoleId = roleIdInput.value.trim();
+            const prefix = this.currentUser.role === 'admin' ? 'Admin' : 'opawclaw';
+            
+            // 驗證格式並更新 P2P ID
+            if (customRoleId.startsWith(prefix + '-') || customRoleId.startsWith(prefix.toLowerCase() + '-')) {
+                // 生成新的完整 P2P ID，使用自定義角色 ID 作為前綴
+                const randomHex = Array.from({length: 16}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+                this.currentUser.id = `${customRoleId}-P2P-0x${randomHex}`;
+                this.currentUser.name = customRoleId;
+                
+                // 更新顯示
+                this.elements.myPeerId.innerText = this.currentUser.id;
+            }
+        }
+        
         this.toggleSettings();
         
         if (targetId && this.currentUser.role === 'worker') {
@@ -512,7 +565,7 @@ const PondsChat = {
                 this.restartPlan(true);
             }, 800);
         } else {
-            this.systemMessage(`[System] 角色已切換為: ${this.currentUser.role === 'admin' ? '管理者' : '執行者'}`);
+            this.systemMessage(`[System] 角色已切換為: ${this.currentUser.role === 'admin' ? '管理者' : '執行者'} (${this.currentUser.name})\nP2P ID: ${this.currentUser.id}`);
         }
     },
     
