@@ -1,0 +1,405 @@
+/**
+ * PondsChat - Custom Styles
+ * 客製化樣式（Tailwind CSS 基礎上）
+ */
+
+/* 引入字體 */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+/* 自定義字體 */
+body {
+    font-family: 'Noto Sans TC', sans-serif;
+}
+
+.code-font {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* 自定義卷軸 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* 玻璃效果面板 */
+.glass-panel {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 訊息進入動畫 */
+.message-enter {
+    animation: slideIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 同步指示器 */
+.sync-indicator {
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px #10b981;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+/* 訊息氣泡樣式 */
+.message-bubble {
+    position: relative;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.message-bubble.self {
+    background: rgba(6, 182, 212, 0.2);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    align-self: flex-end;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.message-bubble.other {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+    align-self: flex-start;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.message-bubble.system {
+    background: transparent;
+    border: none;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    max-width: 100%;
+}
+
+.message-bubble.agent {
+    background: rgba(79, 70, 229, 0.15);
+    border: 1px solid rgba(79, 70, 229, 0.3);
+    align-self: flex-start;
+    border-bottom-left-radius: 0.25rem;
+}
+
+/* 角色切換按鈕 */
+.role-toggle {
+    position: relative;
+    background: #0f172a;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    border: 1px solid #334155;
+}
+
+.role-toggle button {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.role-toggle button.active {
+    background: #06b6d4;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.role-toggle button:not(.active) {
+    color: #94a3b8;
+}
+
+.role-toggle button:not(.active):hover {
+    color: white;
+}
+
+/* Agent 列表項目 */
+.agent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    transition: all 0.2s;
+}
+
+.agent-item:hover {
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.agent-item .status-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+}
+
+.agent-item .status-dot.online {
+    background-color: #10b981;
+    box-shadow: 0 0 6px #10b981;
+}
+
+.agent-item .status-dot.offline {
+    background-color: #ef4444;
+}
+
+/* 世界觀區域 */
+.worldview-box {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 0.75rem;
+    color: #4ade80;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+/* 設定 Modal */
+.settings-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.settings-modal .modal-content {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid #475569;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    width: 400px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* 按鈕樣式 */
+.btn-primary {
+    background: #06b6d4;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.3);
+}
+
+.btn-primary:hover {
+    background: #0891b2;
+}
+
+.btn-danger {
+    background: #e11d48;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    background: #be123c;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-secondary {
+    background: #475569;
+    color: #cbd5e1;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid #64748b;
+}
+
+.btn-secondary:hover {
+    background: #64748b;
+    color: white;
+}
+
+/* 輸入框樣式 */
+input[type="text"],
+input[type="number"],
+textarea {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    color: white;
+    transition: all 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: #06b6d4;
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #64748b;
+}
+
+/* 隱藏元素 */
+.hidden {
+    display: none !important;
+}
+
+/* 禁用狀態 */
+.disabled,
+[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 文字顏色輔助類 */
+.text-admin {
+    color: #06b6d4;
+}
+
+.text-agent {
+    color: #818cf8;
+}
+
+.text-success {
+    color: #10b981;
+}
+
+.text-warning {
+    color: #fbbf24;
+}
+
+.text-error {
+    color: #ef4444;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .sidebar-right {
+        display: none;
+    }
+    
+    .sidebar-left {
+        width: 200px;
+    }
+    
+    .message-bubble {
+        max-width: 90%;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar-left {
+        display: none;
+    }
+    
+    .settings-modal .modal-content {
+        width: 90%;
+        margin: 1rem;
+    }
+}
+
+/* 動畫效果 */
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 會議結束狀態 */
+.meeting-ended .message-input,
+.meeting-ended .send-button {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.meeting-ended::after {
+    content: '🔒 會議已鎖定';
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #ef4444;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}

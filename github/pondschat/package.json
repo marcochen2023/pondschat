@@ -1,0 +1,31 @@
+{
+  "name": "pondschat",
+  "version": "1.0.0",
+  "description": "P2P 去中心化 AI 協作群組系統 - 讓多個 Openclaw AI Agent 能同步認知、討論並分工執行任務",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "p2p",
+    "decentralized",
+    "ai",
+    "collaboration",
+    "multi-agent",
+    "openclaw",
+    "chat"
+  ],
+  "author": "Tiger (Zen's Digital Twin)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/pondschat.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PondsChat - P2P 去中心化 AI 協作群組系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <header class="glass-panel h-16 flex items-center justify-between px-6 z-10">
+        <div class="flex items-center gap-3">
+            <div class="text-2xl font-bold text-cyan-400 code-font">&lt;PondsChat/&gt;</div>
+            <div class="text-xs px-2 py-1 bg-slate-800 rounded text-slate-400 border border-slate-700">P2P Node Active</div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm">
+                <span class="sync-indicator" id="syncStatus"></span>
+                <span id="syncText" class="text-slate-300">Data Synced</span>
+            </div>
+            <div class="h-6 w-px bg-slate-600"></div>
+            <button onclick="restartPlan()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded text-sm font-medium transition-colors">重啟計畫</button>
+            <button onclick="endMeeting()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 rounded text-sm font-medium transition-colors">會議結束</button>
+            <button onclick="exportDB()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition-colors hidden md:block">匯出備份</button>
+            <label class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-sm font-medium transition-colors cursor-pointer hidden md:block">
+                匯入備份
+                <input type="file" class="hidden" accept=".json" onchange="importDB(event)">
+            </label>
+            <button onclick="toggleSettings()" class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded transition-colors" title="設定">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Sidebar: Nodes & Agents -->
+        <aside class="w-64 glass-panel border-r border-t-0 flex flex-col p-4 overflow-y-auto">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Node Identity</h3>
+            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 mb-6">
+                <div class="text-xs text-slate-400 mb-1">Your P2P ID</div>
+                <div class="flex items-center gap-2">
+                    <div class="text-sm font-mono text-cyan-300 truncate flex-1" id="myPeerId">admin-0x9a8fbcde123456789012345678901234567890</div>
+                    <button onclick="copyP2PId()" class="text-slate-400 hover:text-cyan-400 transition-colors" title="複製 P2P ID">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">opawclaw Agents</h3>
+            </div>
+            
+            <div id="agentsList" class="flex flex-col gap-2">
+                <!-- Agents will be injected here -->
+            </div>
+        </aside>
+
+        <!-- Chat Area -->
+        <main class="flex-1 flex flex-col relative">
+            <!-- Messages -->
+            <div id="chatBox" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 pb-32">
+                <div class="text-center text-slate-500 text-sm my-4">-- P2P Network Established. Database Synced. --</div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="absolute bottom-0 w-full glass-panel border-t p-4">
+                <div class="flex gap-2 max-w-5xl mx-auto">
+                    <button id="dbQueryBtn" onclick="toggleMode()" class="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-300 hover:bg-slate-700 transition-colors code-font text-sm">
+                        SQL Mode
+                    </button>
+                    <input type="text" id="msgInput" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500 transition-colors" placeholder="輸入指令或請求... 所有 Agent 將自動同步討論">
+                    <button id="sendBtn" onclick="sendMessage()" class="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition-colors shadow-lg shadow-cyan-500/30">
+                        發送 (Broadcast)
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar: Database State -->
+        <aside class="w-72 glass-panel border-l border-t-0 flex flex-col p-4 hidden md:flex">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Live Database State</h3>
+            <div class="flex items-center justify-between text-xs mb-2">
+                <span class="text-slate-400">Total Records:</span>
+                <span id="dbRecordCount" class="font-mono text-cyan-400">0</span>
+            </div>
+            <div class="text-xs text-slate-500 mb-4">Sync Delay: 1-3s (P2P Broadcast)</div>
+            
+            <h4 class="text-xs font-bold text-slate-400 mb-2 mt-4">Worldview Consensus</h4>
+            <div id="worldviewBox" class="flex-1 bg-slate-800 rounded border border-slate-700 p-3 text-xs code-font text-green-400 overflow-y-auto whitespace-pre-wrap">
+// No consensus data yet.
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="glass-panel p-6 rounded-xl w-[400px] border border-slate-600 shadow-2xl">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                PondsChat 設定
+            </h2>
+            
+            <div class="mb-5">
+                <label class="block text-sm font-medium text-slate-300 mb-2">角色切換 (Role)</label>
+                <div class="flex bg-slate-900 rounded-lg p-1 border border-slate-700 relative">
+                    <button id="roleAdminBtn" onclick="setRole('admin')" class="flex-1 py-2 rounded-md bg-cyan-600 text-white text-sm font-bold transition-all shadow-md">管理者 (人類)</button>
+                    <button id="roleWorkerBtn" onclick="setRole('worker')" class="flex-1 py-2 rounded-md text-slate-400 hover:text-white text-sm font-medium transition-all">執行者 (AI Agent)</button>
+                </div>
+                <p class="text-xs text-slate-500 mt-2" id="roleDesc">人類管理員擁有最大權限，可發布全域任務與重置會議。</p>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-slate-300 mb-2">串接人類用戶 P2P ID <span class="text-xs text-slate-500">(執行者模式用)</span></label>
+                <input type="text" id="targetP2pId" class="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg p-2.5 text-sm text-white placeholder-slate-600" placeholder="輸入要連線的 P2P ID...">
+            </div>
+
+            <div class="flex justify-end gap-3 mt-4 border-t border-slate-700 pt-4">
+                <button onclick="toggleSettings()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm text-slate-300 transition-colors">取消</button>
+                <button onclick="applySettings()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-sm font-bold text-white shadow-lg shadow-cyan-500/30 transition-colors">套用設定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 JavaScript 模組 -->
+    <script src="js/db.js"></script>
+    <script src="js/p2p.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- 頁面腳本 -->
+    <script>
+        // 頁面載入後檢查 URL 參數
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // 檢查是否有 P2P ID 參數（從 Openclaw Chat 傳入）
+            if (urlParams.has('p2pId')) {
+                const p2pId = urlParams.get('p2pId');
+                document.getElementById('targetP2pId').value = p2pId;
+                
+                // 自動切換為執行者模式
+                setRole('worker');
+                
+                // 自動開啟設定並套用
+                setTimeout(() => {
+                    applySettings();
+                }, 500);
+            }
+            
+            // 檢查是否自動開始會議
+            if (urlParams.has('autoStart')) {
+                setTimeout(() => {
+                    restartPlan(true);
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
