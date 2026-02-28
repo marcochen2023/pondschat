@@ -41,9 +41,6 @@ const PondsChat = {
         // 載入資料
         await this.loadData();
         
-        // 渲染 UI
-        this.render();
-        
         console.log('[PondsChat] Ready');
     },
     
@@ -98,6 +95,7 @@ const PondsChat = {
         for (const msg of messages) {
             this.appendMessageToDOM(msg);
         }
+        
         // 載入世界觀
         const worldview = await PondsDB.getWorldview();
         if (worldview) {
@@ -106,43 +104,9 @@ const PondsChat = {
         
         // 取得記錄數
         const count = await PondsDB.getRecordCount();
-        this.elements.dbRecordCount.textContent = count;
-    },
-    
-    /**
-     * 渲染 UI
-     */
-    render() {
-        this.renderAgents();
-    },
-    
-    /**
-     * 渲染 Agent 列表
-     */
-    renderAgents() {
-        const list = this.elements.agentsList;
-        if (!list) return;
-        
-        list.innerHTML = '';
-        
-        this.agents.forEach(agent => {
-            const isMod = agent.role === 'moderator';
-            const html = `
-                <div class="flex items-center justify-between p-2 rounded bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 transition-colors">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full ${agent.status === 'online' ? 'bg-green-500' : 'bg-red-500'}"></div>
-                        <div class="flex flex-col">
-                            <span class="text-sm font-medium ${isMod ? 'text-purple-400' : 'text-slate-200'}">${agent.name}</span>
-                            <span class="text-[10px] text-slate-500 font-mono">${agent.id.substring(0, 8)}...</span>
-                        </div>
-                    </div>
-                    ${this.currentUser.role === 'admin' ? `
-                        <button onclick="PondsChat.kickAgent('${agent.id}')" class="text-xs text-red-400 hover:text-red-300 hover:bg-red-900/30 px-2 py-1 rounded transition-colors" title="Kick Node">Kick</button>
-                    ` : ''}
-                </div>
-            `;
-            list.insertAdjacentHTML('beforeend', html);
-        });
+        if (this.elements.dbRecordCount) {
+            this.elements.dbRecordCount.textContent = count;
+        }
     },
     
     /**
@@ -202,58 +166,6 @@ const PondsChat = {
         
         // P2P 廣播
         await P2PEngine.broadcastMessage(msg);
-    },
-    
-    /**
-     * 模擬 AI 討論
-     */
-    simulateAIDiscussion(humanMsg) {
-        this.setSyncStatus(true);
-        
-        // Phase 1: 討論
-        setTimeout(() => {
-            const msg1 = {
-                id: this.generateId(),
-                sender: 'opawclaw-Beta',
-                senderId: 'agent-2',
-                text: `[SYNC_PROPOSAL] 分析任務：「${humanMsg.text.substring(0, 30)}...」。我建議將流程分為資料收集與後續處理兩段。`,
-                timestamp: Date.now(),
-                isHuman: false
-            };
-            PondsDB.saveMessage(msg1).then(() => this.appendMessageToDOM(msg1));
-        }, 1500);
-        
-        setTimeout(() => {
-            const msg2 = {
-                id: this.generateId(),
-                sender: 'opawclaw-Gamma',
-                senderId: 'agent-3',
-                text: `[SYNC_PROPOSAL] 同意 Beta 的看法。我的專長適合處理資料收集。`,
-                timestamp: Date.now(),
-                isHuman: false
-            };
-            PondsDB.saveMessage(msg2).then(() => this.appendMessageToDOM(msg2));
-        }, 3000);
-        
-        // Phase 2: 共識
-        setTimeout(() => {
-            const msg3 = {
-                id: this.generateId(),
-                sender: 'opawclaw-Alpha (Mod)',
-                senderId: 'agent-1',
-                text: `[CONSENSUS] 任務目標已對齊。世界觀同步完成。\n分工：Gamma 執行收集，Beta 執行處理。`,
-                timestamp: Date.now(),
-                isHuman: false
-            };
-            PondsDB.saveMessage(msg3).then(() => this.appendMessageToDOM(msg3));
-            
-            // 更新世界觀
-            const taskData = `Task: ${humanMsg.text}\nStrategy: Split data collection (Gamma) and processing (Beta).`;
-            PondsDB.saveWorldview('current_task', taskData, 'Consensus reached');
-            this.updateWorldviewDisplay({ data: taskData, consensus: 'Consensus reached' });
-            
-            this.setSyncStatus(false);
-        }, 5000);
     },
     
     /**
@@ -382,24 +294,13 @@ const PondsChat = {
         }
         
         // 更新記錄數
-        this.elements.dbRecordCount.textContent = '0';
+        if (this.elements.dbRecordCount) {
+            this.elements.dbRecordCount.textContent = '0';
+        }
         this.updateWorldviewDisplay(null);
         
         const triggerMsg = isAutoStart ? '(由執行者自動串接觸發)' : '';
         this.systemMessage(`[System] 計畫已重啟 ${triggerMsg}。會議室資料已清空，開啟全新目標！請開始輸入任務。`);
-    },
-    
-    /**
-     * 踢除 Agent
-     */
-    async kickAgent(agentId) {
-        if (this.currentUser.role !== 'admin') return;
-        
-        this.agents = this.agents.filter(a => a.id !== agentId);
-        this.renderAgents();
-        this.systemMessage(`[Network] Node ${agentId} has been forcefully disconnected by Admin.`);
-        
-        await P2PEngine.kickAgent(agentId);
     },
     
     /**
@@ -469,10 +370,26 @@ const PondsChat = {
      */
     copyP2PId() {
         const p2pId = this.currentUser.id;
+        if (!p2pId) {
+            console.error('複製失敗: P2P ID 為空');
+            return;
+        }
         navigator.clipboard.writeText(p2pId).then(() => {
             this.systemMessage(`[System] P2P ID 已複製到剪貼簿: ${p2pId}`);
         }).catch(err => {
             console.error('複製失敗:', err);
+            // Fallback for non-secure contexts
+            const textArea = document.createElement("textarea");
+            textArea.value = p2pId;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                this.systemMessage(`[System] P2P ID 已複製到剪貼簿: ${p2pId}`);
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            document.body.removeChild(textArea);
         });
     },
     
@@ -492,7 +409,10 @@ const PondsChat = {
         if (role === 'admin') {
             this.currentUser.role = 'admin';
             this.currentUser.name = 'Human Admin';
-            this.currentUser.id = this.generateP2PId('admin');
+            // 只有當前 ID 不是以正確前綴開頭時才重新生成，避免每次切換都變
+            if (!this.currentUser.id.startsWith('admin-P2P-')) {
+                this.currentUser.id = this.generateP2PId('admin');
+            }
             
             adminBtn.className = 'flex-1 py-2 rounded-md bg-cyan-600 text-white text-sm font-bold transition-all shadow-md';
             workerBtn.className = 'flex-1 py-2 rounded-md text-slate-400 hover:text-white text-sm font-medium transition-all';
@@ -503,12 +423,13 @@ const PondsChat = {
                 roleIdInput.value = roleId;
                 roleIdInput.placeholder = 'Admin-XXXX';
             }
-            
-            this.elements.myPeerId.innerText = this.currentUser.id;
         } else {
             this.currentUser.role = 'worker';
             this.currentUser.name = 'Openclaw AI Agent (執行者)';
-            this.currentUser.id = this.generateP2PId('worker');
+            // 只有當前 ID 不是以正確前綴開頭時才重新生成
+            if (!this.currentUser.id.startsWith('worker-P2P-')) {
+                this.currentUser.id = this.generateP2PId('worker');
+            }
             
             workerBtn.className = 'flex-1 py-2 rounded-md bg-indigo-600 text-white text-sm font-bold transition-all shadow-md';
             adminBtn.className = 'flex-1 py-2 rounded-md text-slate-400 hover:text-white text-sm font-medium transition-all';
@@ -519,13 +440,10 @@ const PondsChat = {
                 roleIdInput.value = roleId;
                 roleIdInput.placeholder = 'opawclaw-XXXX';
             }
-            
-            this.elements.myPeerId.innerText = this.currentUser.id;
-            
-            workerBtn.className = 'flex-1 py-2 rounded-md bg-indigo-600 text-white text-sm font-bold transition-all shadow-md';
-            adminBtn.className = 'flex-1 py-2 rounded-md text-slate-400 hover:text-white text-sm font-medium transition-all';
-            desc.innerText = '作為執行者，將自動讀取 PondsChat 結論，並發送至 Openclaw Chat 頻道執行工作。';
-            
+        }
+        
+        // 更新 UI 顯示
+        if (this.elements.myPeerId) {
             this.elements.myPeerId.innerText = this.currentUser.id;
         }
     },
@@ -543,14 +461,18 @@ const PondsChat = {
             const prefix = this.currentUser.role === 'admin' ? 'Admin' : 'opawclaw';
             
             // 驗證格式並更新 P2P ID
-            if (customRoleId.startsWith(prefix + '-') || customRoleId.startsWith(prefix.toLowerCase() + '-')) {
+            // 允許自定義格式，但確保生成有效的 P2P ID
+            if (customRoleId.length > 0) {
                 // 生成新的完整 P2P ID，使用自定義角色 ID 作為前綴
+                // 格式: customRoleId-P2P-0x[16hex]
                 const randomHex = Array.from({length: 16}, () => Math.floor(Math.random() * 16).toString(16)).join('');
                 this.currentUser.id = `${customRoleId}-P2P-0x${randomHex}`;
                 this.currentUser.name = customRoleId;
                 
                 // 更新顯示
-                this.elements.myPeerId.innerText = this.currentUser.id;
+                if (this.elements.myPeerId) {
+                    this.elements.myPeerId.innerText = this.currentUser.id;
+                }
             }
         }
         
@@ -658,10 +580,10 @@ function toggleSettings() { PondsChat.toggleSettings(); }
 function setRole(role) { PondsChat.setRole(role); }
 function applySettings() { PondsChat.applySettings(); }
 function toggleMode() { PondsChat.toggleMode(); }
-function kickAgent(id) { PondsChat.kickAgent(id); }
 function exportDB() { PondsChat.exportDB(); }
 function importDB(event) { PondsChat.importDB(event); }
 function copyP2PId() { PondsChat.copyP2PId(); }
+function generateNewRoleId() { PondsChat.generateNewRoleId(); }
 
 // 頁面載入後初始化
 document.addEventListener('DOMContentLoaded', () => {
